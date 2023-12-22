@@ -7,9 +7,20 @@ require("./models");
 const { connection } = require("./config/database");
 const { Chat } = require("./models");
 const { getChatOrChannelParticipants } = require("./telegramAPI");
+const express = require("express");
+const app = express();
+
+app.get("/", (req, res) => {
+  res.send("helloworld");
+});
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("Ruuning at 3000");
+});
+
 connection();
 const stringSession = new StringSession(
-  "1BQANOTEuMTA4LjU2LjE1MgG7EwkAj+mELE6W9QM8G/qpWyTjaV9QgFq4IqZx4lPxWVe5i8TlR/L7OCKCXZd0txjTJAmzX3ha0ODTcCVQdVKyI7eYUYzlJ94N0JnJSSMcNm5vr9qvE7RJUaGC/s3/cB8p3W3pZMNZ/WqTnvoDjD117qdgFQ633GyqbXb+oTa2dIDFOouamfUE9FXRoVUTIuvB26X5IW3KjDHkjpi+DG8xY3GWfhzv0eyhLpExcnOqVjd+6Z2xQIL05L0o1mCorn0/8xcCFNWWHORcisy4zypQM0NTA8xr47C0RkOdwHUtjAULABWCZztpw4PIdw+XXWMwuB8yIXW/Omk1ecWlQw/i9w=="
+  "1BQANOTEuMTA4LjU2LjE1MgG7abihHmA2T7khgIK09FIxVPgKjQmfwMuOquybV63Jx/b+K65INS57U0W1wNG8EAV5FZmPkdwEs72J83U/zwcslPOOOYTpWuXd39nNWTC+FXyIsIw11Skd/phUpm6nsfst/a8hdq4wKOp08wKZoltO4sXzLPSoGjQEKZ/3KoVf9KcAyUrDI/3ui71FBzTMi47Gy5rRSa0CedIv72KQSAX6kMae4SP/C+S5f38enah5muULFK2b1xhLWTqSFTcLGEhGOKZ0bOe+oM5Sm6nIH0x/QUxis4ywfkzUTeXMSa7ahrfjhgxFxKIhq7wLxzZTuD6+ztLlNLyrLNfczry8In3EQA=="
 );
 const apiId = Number(process.env.API_ID);
 const apiHash = process.env.API_HASH;
@@ -17,11 +28,11 @@ const client = new TelegramClient(stringSession, apiId, apiHash, {
   connectionRetries: 5,
 });
 
-client.floodSleepThreshold = 300;
 (async () => {
   await client.start({
     botAuthToken: process.env.TELEGRAM_BOT_TOKEN,
   });
+  client.floodSleepThreshold = 300;
   console.log(client.session.save());
   console.log(stringSession.save());
 })();
@@ -126,7 +137,7 @@ async function sendMessageCronJob() {
       message: `Cpn các Kvt @all
 
       Xin giúp đỡ đăng ký số lượng suất ăn trước 19h nhé.
-      
+
       Xin cảm ơn nhiều ạ ~`,
       entities: [],
     })
