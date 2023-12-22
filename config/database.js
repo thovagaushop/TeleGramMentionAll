@@ -1,11 +1,9 @@
 const { Sequelize } = require("sequelize");
+const pg = require("pg");
 require("dotenv").config();
 
 const sequelize = new Sequelize(process.env.DB_URI, {
-  dialect: "postgres",
-  dialectOptions: {
-    supportBigNumbers: true,
-  },
+  dialectModule: pg,
 });
 
 const connection = async () => {
