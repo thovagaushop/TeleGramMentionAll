@@ -94,7 +94,7 @@ client.addEventHandler(async (event) => {
 }, new NewMessage({}));
 
 async function sendMessageCronJob() {
-  const channelId = 4046508961;
+  const channelId = 2146406214;
   let chat = await Chat.findByPk(channelId);
   if (chat) {
     const padString = "!";
