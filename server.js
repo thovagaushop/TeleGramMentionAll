@@ -142,12 +142,12 @@ async function sendMessageCronJob() {
   );
 }
 
-// cron.schedule(
-//   "* * * * *",
-//   () => {
-//     sendMessageCronJob();
-//   },
-//   {
-//     timezone: "Asia/Bangkok",
-//   }
-// );
+cron.schedule(
+  "0 17 * * *",
+  () => {
+    sendMessageCronJob();
+  },
+  {
+    timezone: "Asia/Bangkok",
+  }
+);
