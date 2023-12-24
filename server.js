@@ -19,9 +19,7 @@ app.listen(PORT, () => {
 });
 
 connection();
-const stringSession = new StringSession(
-  "1BQANOTEuMTA4LjU2LjE1MgG7abihHmA2T7khgIK09FIxVPgKjQmfwMuOquybV63Jx/b+K65INS57U0W1wNG8EAV5FZmPkdwEs72J83U/zwcslPOOOYTpWuXd39nNWTC+FXyIsIw11Skd/phUpm6nsfst/a8hdq4wKOp08wKZoltO4sXzLPSoGjQEKZ/3KoVf9KcAyUrDI/3ui71FBzTMi47Gy5rRSa0CedIv72KQSAX6kMae4SP/C+S5f38enah5muULFK2b1xhLWTqSFTcLGEhGOKZ0bOe+oM5Sm6nIH0x/QUxis4ywfkzUTeXMSa7ahrfjhgxFxKIhq7wLxzZTuD6+ztLlNLyrLNfczry8In3EQA=="
-);
+const stringSession = new StringSession(process.env.SESSION);
 const apiId = Number(process.env.API_ID);
 const apiHash = process.env.API_HASH;
 const client = new TelegramClient(stringSession, apiId, apiHash, {
@@ -105,7 +103,7 @@ client.addEventHandler(async (event) => {
 }, new NewMessage({}));
 
 async function sendMessageCronJob() {
-  const channelId = 2146406214;
+  const channelId = 4046508961;
   let chat = await Chat.findByPk(channelId);
   if (chat) {
     const padString = "!";
@@ -144,12 +142,12 @@ async function sendMessageCronJob() {
   );
 }
 
-cron.schedule(
-  "* * * * *",
-  () => {
-    sendMessageCronJob();
-  },
-  {
-    timezone: "Asia/Bangkok",
-  }
-);
+// cron.schedule(
+//   "* * * * *",
+//   () => {
+//     sendMessageCronJob();
+//   },
+//   {
+//     timezone: "Asia/Bangkok",
+//   }
+// );
