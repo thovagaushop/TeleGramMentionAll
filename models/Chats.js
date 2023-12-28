@@ -8,17 +8,13 @@ const Chat = sequelize.define("Chat", {
     allowNull: false,
     primaryKey: true,
   },
-  typePeer: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  namePeerID: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
   name: {
     type: DataTypes.STRING,
     allowNull: false,
+  },
+  type: {
+    type: DataTypes.STRING,
+    allowNull: true,
   },
   meta: {
     type: DataTypes.JSONB,

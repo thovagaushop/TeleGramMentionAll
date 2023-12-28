@@ -1,5 +1,4 @@
-const { TelegramClient, Api } = require("telegram");
-const { NewMessage } = require("telegram/events");
+const { TelegramClient } = require("telegram");
 const cron = require("node-cron");
 const { StringSession } = require("telegram/sessions");
 require("dotenv").config();
@@ -7,19 +6,11 @@ require("./models");
 const { connection } = require("./config/database");
 const { Chat } = require("./models");
 const { getChatOrChannelParticipants } = require("./telegramAPI");
-const express = require("express");
-const app = express();
-
-app.get("/", (req, res) => {
-  res.send("helloworld");
-});
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("Ruuning at 3000");
-});
-
+const { Telegraf } = require("telegraf");
+const { message } = require("telegraf/filters");
+const { mention, join, FmtString } = require("telegraf/format");
 connection();
-const stringSession = new StringSession(process.env.SESSION);
+const stringSession = new StringSession(process.env.SESSION || "");
 const apiId = Number(process.env.API_ID);
 const apiHash = process.env.API_HASH;
 const client = new TelegramClient(stringSession, apiId, apiHash, {
@@ -35,30 +26,23 @@ const client = new TelegramClient(stringSession, apiId, apiHash, {
   console.log(stringSession.save());
 })();
 
-client.addEventHandler(async (event) => {
-  const message = event.message;
-  console.log(message);
-  // Command (/all)
-  if (message.message.includes("@all")) {
-    const namePeerID = Object.keys(message.peerId).find((str) =>
-      str.includes("Id")
-    );
-    const channelId = BigInt(message.peerId[namePeerID]);
-    console.log(channelId);
+const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
-    const typePeer = message.peerId.className;
+bot.catch((err, ctx) => {
+  console.log(`Ooops, encountered an error for ${ctx.updateType}`, err);
+});
 
-    let chat = await Chat.findByPk(channelId);
+bot.on(message("text"), async (ctx) => {
+  if (ctx.update.message.text.includes("@all")) {
+    console.log(ctx.update.message);
+    const telegramChat = ctx.update.message.chat;
+
+    let chat = await Chat.findByPk(BigInt(telegramChat.id));
 
     if (!chat) {
-      // Get participants
-      const participants = await getChatOrChannelParticipants(
-        client,
-        channelId,
-        typePeer,
-        namePeerID
+      const participants = await client.getParticipants(
+        BigInt(telegramChat.id)
       );
-
       const meta = participants.map((participant) => {
         const { id, firstName, lastName, username } = participant;
         return {
@@ -70,75 +54,48 @@ client.addEventHandler(async (event) => {
       });
 
       chat = await Chat.create({
-        id: channelId,
-        typePeer,
-        namePeerID,
-        name: `Chat_${channelId}`,
+        id: telegramChat.id,
+        name: telegramChat.title,
+        type: telegramChat.type,
         meta,
       });
     }
 
-    const padString = "!";
-    let sendMessage = "";
+    const messageList = [];
     for (let i = 0; i < chat.meta.length; i++) {
-      sendMessage += padString;
+      const formatString = mention("!", Number(chat.meta[i].id));
+      messageList.push(formatString);
     }
+    const messageSend = join(messageList, "");
+    messageSend.text += " Mention @all📌📌";
+    console.log(messageSend);
 
-    const entities = chat.meta.map((user, index) => {
-      return new Api.InputMessageEntityMentionName({
-        offset: index,
-        length: 1,
-        userId: new Api.InputUser({ userId: BigInt(user.id) }),
-      });
-    });
-
-    await client.invoke(
-      new Api.messages.SendMessage({
-        peer: channelId,
-        message: `${sendMessage} Mention @all📌📌`,
-        entities: entities,
-      })
-    );
+    await ctx.telegram.sendMessage(telegramChat.id, messageSend);
   }
-}, new NewMessage({}));
+});
 
 async function sendMessageCronJob() {
-  const channelId = 4046508961;
-  let chat = await Chat.findByPk(channelId);
+  const chatId = -4046508961;
+  let chat = await Chat.findByPk(chatId);
   if (chat) {
-    const padString = "!";
-    let sendMessage = "";
+    const messageList = [];
     for (let i = 0; i < chat.meta.length; i++) {
-      sendMessage += padString;
+      const formatString = mention("!", Number(chat.meta[i].id));
+      messageList.push(formatString);
     }
+    const messageSend = join(messageList, "");
+    messageSend.text += " Mention @all📌📌";
+    console.log(messageSend);
 
-    const entities = chat.meta.map((user, index) => {
-      return new Api.InputMessageEntityMentionName({
-        offset: index,
-        length: 1,
-        userId: new Api.InputUser({ userId: BigInt(user.id) }),
-      });
-    });
-
-    await client.invoke(
-      new Api.messages.SendMessage({
-        peer: new Api[chat.typePeer]({ [chat.namePeerID]: chat.id }),
-        message: `${sendMessage} Mention @all📌📌`,
-        entities: entities,
-      })
-    );
+    await bot.telegram.sendMessage(chatId, messageSend);
   }
+  await bot.telegram.sendMessage(
+    chatId,
+    `Cpn các Kvt @all
 
-  await client.invoke(
-    new Api.messages.SendMessage({
-      peer: new Api.PeerChannel({ channelId }),
-      message: `Cpn các Kvt @all
+  Xin giúp đỡ đăng ký số lượng suất ăn trước 19h nhé.
 
-      Xin giúp đỡ đăng ký số lượng suất ăn trước 19h nhé.
-
-      Xin cảm ơn nhiều ạ ~`,
-      entities: [],
-    })
+  Xin cảm ơn nhiều ạ ~`
   );
 }
 
@@ -151,3 +108,9 @@ cron.schedule(
     timezone: "Asia/Bangkok",
   }
 );
+
+bot.launch();
+
+// Enable graceful stop
+process.once("SIGINT", () => bot.stop("SIGINT"));
+process.once("SIGTERM", () => bot.stop("SIGTERM"));
